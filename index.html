@@ -1,0 +1,262 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Card World</title>
+<meta name="description" content="Bryan's Card World: track buys, sales, lots, shows, and pay.">
+<meta name="theme-color" content="#f1ebe1" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#18212b" media="(prefers-color-scheme: dark)">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Card World">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/favicon.png" type="image/png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="preload" href="fonts/archivo-variable.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="css/app.css">
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+
+<!-- Sign in -->
+<div id="auth" class="auth" hidden>
+  <form id="authform" class="auth-card" novalidate>
+    <picture><source srcset="icons/mark-dark.png" media="(prefers-color-scheme: dark)"><img src="icons/mark.png" alt="" class="auth-mark" width="120" height="104"></picture>
+    <h1 class="wordmark" translate="no">Bryan's<span>Card World</span></h1>
+    <label class="f">Email<input id="a-email" type="email" autocomplete="email" inputmode="email" spellcheck="false" required></label>
+    <label class="f">Password<input id="a-pass" type="password" autocomplete="current-password" minlength="8" required></label>
+    <p class="form-msg" id="a-msg" role="alert"></p>
+    <button class="btn primary" type="submit" id="a-submit">Sign in</button>
+    <button class="btn link" type="button" id="a-toggle">First time? Create your account</button>
+  </form>
+  <div id="setup-needed" class="auth-card" hidden>
+    <picture><source srcset="icons/mark-dark.png" media="(prefers-color-scheme: dark)"><img src="icons/mark.png" alt="" class="auth-mark" width="120" height="104"></picture>
+    <h1 class="wordmark">Almost ready</h1>
+    <p>Add your Supabase project URL and key to <code>js/config.js</code>, then reload.</p>
+  </div>
+</div>
+
+<div id="app" class="shell" hidden>
+  <aside class="sidebar">
+    <div class="brand"><picture><source srcset="icons/mark-dark.png" media="(prefers-color-scheme: dark)"><img src="icons/mark.png" alt="" width="40" height="35"></picture><span class="wordmark small" translate="no">Bryan's<span>Card World</span></span></div>
+    <nav class="nav" aria-label="Sections">
+      <button type="button" data-go="overview">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20V11M10 20V5M16 20v-6M2.5 20h19"/></svg>Overview</button>
+      <button type="button" data-go="inventory">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="3" width="14" height="18" rx="2.5"/><path d="M8.5 17h7"/></svg>Inventory</button>
+      <button type="button" data-go="add" class="nav-add">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>Add</button>
+      <button type="button" data-go="shows">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 10h18M5 10v10M19 10v10M7.5 10 9 4h6l1.5 6"/></svg>Shows</button>
+      <button type="button" data-go="pay">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="2.5" y="6" width="19" height="13" rx="2.5"/><circle cx="12" cy="12.5" r="2.5"/></svg>Pay</button>
+    </nav>
+    <div class="sync-pill" id="sync-side" role="status"></div>
+  </aside>
+
+  <main class="main" id="main" tabindex="-1">
+    <div class="sync-banner" id="sync-banner" role="status" hidden></div>
+
+    <!-- Overview -->
+    <section id="v-overview" data-view aria-labelledby="h-overview">
+      <header class="view-head">
+        <h1 id="h-overview">Overview</h1>
+        <div class="seg" id="period" role="group" aria-label="Time period">
+          <button type="button" data-p="month" aria-pressed="true">This month</button>
+          <button type="button" data-p="30" aria-pressed="false">30 days</button>
+          <button type="button" data-p="year" aria-pressed="false">This year</button>
+          <button type="button" data-p="all" aria-pressed="false">All time</button>
+        </div>
+      </header>
+      <div id="ov-empty" class="empty" hidden>
+        <p>Nothing logged yet.</p>
+        <button class="btn primary" type="button" data-go="add">Log your first buy</button>
+      </div>
+      <div class="hero" id="hero"></div>
+      <div class="cols">
+        <section class="block" aria-labelledby="h-pay"><h2 id="h-pay">Pay yourself</h2><div id="ov-pay"></div></section>
+        <section class="block" aria-labelledby="h-restock"><h2 id="h-restock">Restock budget</h2><div id="ov-restock"></div></section>
+      </div>
+      <section class="block" aria-labelledby="h-inv"><h2 id="h-inv">On hand</h2><div id="ov-inv"></div></section>
+      <div class="cols">
+        <section class="block" aria-labelledby="h-groups"><h2 id="h-groups">What's making money</h2><div id="ov-groups" class="tbl"></div></section>
+        <section class="block" aria-labelledby="h-recent"><h2 id="h-recent">Recent sales</h2><div id="ov-recent"></div></section>
+      </div>
+    </section>
+
+    <!-- Inventory -->
+    <section id="v-inventory" data-view aria-labelledby="h-inventory" hidden>
+      <header class="view-head">
+        <h1 id="h-inventory">Inventory</h1>
+        <p class="muted" id="inv-count" aria-live="polite"></p>
+      </header>
+      <div class="toolbar">
+        <label class="search"><span class="sr">Search cards</span>
+          <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="m16 16 4.5 4.5"/></svg>
+          <input id="search" type="search" placeholder="Search cards, grades, lots…" autocomplete="off" spellcheck="false"></label>
+        <div class="chips" id="filters" role="group" aria-label="Filter">
+          <button type="button" data-f="stock" aria-pressed="true">In stock</button>
+          <button type="button" data-f="sports" aria-pressed="false">Sports</button>
+          <button type="button" data-f="pokemon" aria-pressed="false">Pokémon</button>
+          <button type="button" data-f="raw" aria-pressed="false">Raw</button>
+          <button type="button" data-f="slab" aria-pressed="false">Slabs</button>
+          <button type="button" data-f="grading" aria-pressed="false">At PSA</button>
+          <button type="button" data-f="old" aria-pressed="false">90+ days</button>
+          <button type="button" data-f="sold" aria-pressed="false">Sold</button>
+          <button type="button" data-f="all" aria-pressed="false">Everything</button>
+        </div>
+      </div>
+      <ul class="cardlist" id="cardlist"></ul>
+    </section>
+
+    <!-- Add -->
+    <section id="v-add" data-view aria-labelledby="h-add" hidden>
+      <header class="view-head">
+        <h1 id="h-add">Log a buy</h1>
+        <div class="seg" id="addmode" role="group" aria-label="Buy type">
+          <button type="button" data-m="single" aria-pressed="true">One card</button>
+          <button type="button" data-m="lot" aria-pressed="false">Lot</button>
+        </div>
+      </header>
+
+      <form id="cardform" class="form" novalidate>
+        <label class="f">Card<input id="f-name" name="name" autocomplete="off" placeholder="2023 Prizm Wembanyama Silver…" required></label>
+        <div class="row">
+          <div class="seg" role="radiogroup" aria-label="Category">
+            <label><input type="radio" name="f-cat" id="f-cat-sports" value="sports" checked><span>Sports</span></label>
+            <label><input type="radio" name="f-cat" id="f-cat-pokemon" value="pokemon"><span>Pokémon</span></label>
+          </div>
+          <div class="seg" role="radiogroup" aria-label="Raw or slab">
+            <label><input type="radio" name="f-type" id="f-type-raw" value="raw" checked><span>Raw</span></label>
+            <label><input type="radio" name="f-type" id="f-type-slab" value="slab"><span>Slab</span></label>
+          </div>
+        </div>
+        <label class="f" id="grade-wrap" hidden>Grade<input id="f-grade" name="grade" autocomplete="off" placeholder="PSA 10…"></label>
+        <div class="grid2">
+          <label class="f">Comp value<span class="money"><input id="f-market" name="market" type="number" inputmode="decimal" min="0" step="0.01" placeholder="0"></span></label>
+          <label class="f">You paid<span class="money"><input id="f-price" name="price" type="number" inputmode="decimal" min="0" step="0.01" placeholder="0"></span></label>
+        </div>
+        <div class="quick" role="group" aria-label="Set price from comp">
+          <span class="muted">Paid at</span>
+          <button type="button" class="btn ghost sm" data-pct="75">75%</button>
+          <button type="button" class="btn ghost sm" data-pct="80">80%</button>
+          <button type="button" class="btn ghost sm" data-pct="85">85%</button>
+          <button type="button" class="btn ghost sm" data-pct="87">87%</button>
+        </div>
+        <p class="hint" id="buy-hint" aria-live="polite"></p>
+        <div class="grid2">
+          <label class="f">Date bought<input id="f-date" name="date" type="date"></label>
+          <label class="f" id="fee-wrap" hidden>Grading fee<span class="money"><input id="f-fee" name="fee" type="number" inputmode="decimal" min="0" step="0.01"></span></label>
+        </div>
+        <div class="grid2" id="sold-wrap" hidden>
+          <label class="f">Sold for<span class="money"><input id="f-sold" name="sold" type="number" inputmode="decimal" min="0" step="0.01"></span></label>
+          <label class="f">Date sold<input id="f-solddate" name="solddate" type="date"></label>
+        </div>
+        <label class="f">Notes<textarea id="f-notes" name="notes" rows="2" placeholder="Where you got it, anything useful…"></textarea></label>
+        <div class="row">
+          <button class="btn primary" type="submit" id="f-submit">Add to inventory</button>
+          <button class="btn ghost" type="button" id="f-cancel" hidden>Cancel</button>
+        </div>
+      </form>
+
+      <form id="lotform" class="form" novalidate hidden>
+        <label class="f">Lot name<input id="l-name" name="lotname" autocomplete="off" placeholder="Binder from Saturday show…"></label>
+        <div class="grid2">
+          <label class="f">Total paid<span class="money"><input id="l-paid" name="paid" type="number" inputmode="decimal" min="0" step="0.01" placeholder="0"></span></label>
+          <label class="f">Date bought<input id="l-date" name="lotdate" type="date"></label>
+        </div>
+        <div class="seg" role="radiogroup" aria-label="Lot category">
+          <label><input type="radio" name="l-cat" id="l-cat-sports" value="sports" checked><span>Sports</span></label>
+          <label><input type="radio" name="l-cat" id="l-cat-pokemon" value="pokemon"><span>Pokémon</span></label>
+        </div>
+        <div>
+          <h2 class="h-sub">Cards in the lot</h2>
+          <p class="muted small">What you paid gets split by comp value, so a $200 card carries more of the cost than a $20 card.</p>
+        </div>
+        <ol class="lotrows" id="lot-rows"></ol>
+        <div class="row">
+          <button class="btn ghost sm" type="button" id="l-addrow">Add card</button>
+          <button class="btn ghost sm" type="button" id="l-pastetoggle" aria-expanded="false" aria-controls="paste-box">Paste a list</button>
+        </div>
+        <div id="paste-box" class="paste" hidden>
+          <label class="f">One card per line: name, comp
+            <textarea id="l-paste" name="paste" rows="4" placeholder="2023 Prizm Wemby Silver, 120&#10;Charizard ex SIR PSA 10, 340…"></textarea></label>
+          <button class="btn ghost sm" type="button" id="l-pastebtn">Add these cards</button>
+        </div>
+        <div class="lotsum" id="lot-sum" aria-live="polite"></div>
+        <button class="btn primary" type="submit">Add lot to inventory</button>
+      </form>
+    </section>
+
+    <!-- Shows, lots, expenses -->
+    <section id="v-shows" data-view aria-labelledby="h-shows" hidden>
+      <header class="view-head"><h1 id="h-shows">Shows</h1></header>
+      <form id="showform" class="form inline" novalidate>
+        <label class="f grow">Show name<input id="sh-name" name="showname" autocomplete="off" placeholder="Dade County Card Show…" required></label>
+        <label class="f">Date<input id="sh-date" name="showdate" type="date"></label>
+        <label class="f">Table cost<span class="money"><input id="sh-table" name="table" type="number" inputmode="decimal" min="0" step="0.01" placeholder="135"></span></label>
+        <button class="btn primary" type="submit">Add show</button>
+      </form>
+      <ul class="list" id="showlist"></ul>
+
+      <h2 class="h-section">Lots</h2>
+      <ul class="list" id="lotlist"></ul>
+
+      <h2 class="h-section">Other expenses</h2>
+      <form id="expform" class="form inline" novalidate>
+        <label class="f grow">What<input id="ex-label" name="exlabel" autocomplete="off" placeholder="Toploaders, shipping, eBay fees…" required></label>
+        <label class="f">Amount<span class="money"><input id="ex-amount" name="examount" type="number" inputmode="decimal" min="0" step="0.01"></span></label>
+        <label class="f">Date<input id="ex-date" name="exdate" type="date"></label>
+        <button class="btn primary" type="submit">Add expense</button>
+      </form>
+      <ul class="list" id="explist"></ul>
+    </section>
+
+    <!-- Pay -->
+    <section id="v-pay" data-view aria-labelledby="h-paypage" hidden>
+      <header class="view-head"><h1 id="h-paypage">Pay</h1></header>
+      <div id="pay-detail"></div>
+      <h2 class="h-section">Record a payout</h2>
+      <form id="payform" class="form inline" novalidate>
+        <label class="f">Amount<span class="money"><input id="po-amount" name="poamount" type="number" inputmode="decimal" min="0" step="0.01"></span></label>
+        <label class="f">Date<input id="po-date" name="podate" type="date"></label>
+        <button class="btn primary" type="submit">Record payout</button>
+      </form>
+      <ul class="list" id="paylist"></ul>
+
+      <h2 class="h-section">Profit split</h2>
+      <form id="splitform" class="form" novalidate>
+        <p class="muted small">How each dollar of profit gets divided. Reinvest more while you rebuild stock.</p>
+        <div class="grid3">
+          <label class="f">Reinvest<span class="pct"><input id="sp-reinvest" name="reinvest" type="number" min="0" max="100" inputmode="numeric"></span></label>
+          <label class="f">Taxes<span class="pct"><input id="sp-taxes" name="taxes" type="number" min="0" max="100" inputmode="numeric"></span></label>
+          <label class="f">Your pay<span class="pct"><input id="sp-pay" name="pay" type="number" min="0" max="100" inputmode="numeric"></span></label>
+        </div>
+        <p class="hint" id="split-hint" aria-live="polite"></p>
+        <button class="btn primary" type="submit">Save split</button>
+      </form>
+
+      <h2 class="h-section">Account</h2>
+      <div class="account">
+        <p class="muted small" id="acct-line"></p>
+        <div class="row">
+          <button class="btn ghost" type="button" id="sync-now">Sync now</button>
+          <button class="btn ghost" type="button" id="export">Export CSV</button>
+          <label class="btn ghost" for="import-file">Import data</label>
+          <input id="import-file" type="file" accept="application/json,.json" class="sr">
+          <button class="btn ghost" type="button" id="signout">Sign out</button>
+        </div>
+      </div>
+    </section>
+  </main>
+</div>
+
+<dialog class="sheet" id="sheet" aria-labelledby="sheet-title"><div class="sheet-body" id="sheet-body"></div></dialog>
+<div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
+
+<script src="vendor/supabase.js"></script>
+<script type="module" src="js/app.js"></script>
+</body>
+</html>
