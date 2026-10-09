@@ -77,13 +77,17 @@ export function restock(st, settings) {
 export function inventory(data) {
   const stock = data.cards.filter(inStock);
   const cost_ = stock.reduce((a, c) => a + cost(c), 0);
-  const comps = stock.reduce((a, c) => a + num(c.market_value), 0);
+  // Cards marked "No comp" (comp of 0) are left out of comp-based numbers
+  const comped = stock.filter(c => num(c.market_value) > 0);
+  const comps = comped.reduce((a, c) => a + num(c.market_value), 0);
+  const compedCost = comped.reduce((a, c) => a + cost(c), 0);
   const old = stock.filter(c => daysSince(c.buy_date) >= OLD_DAYS);
   return {
     count: stock.length,
     grading: stock.filter(c => c.status === 'grading').length,
     cost: cost_, comps,
-    at95: comps * 0.95 - cost_,
+    at95: comps * 0.95 - compedCost,
+    noComp: stock.length - comped.length,
     old, oldCost: old.reduce((a, c) => a + cost(c), 0),
   };
 }

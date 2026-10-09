@@ -108,8 +108,8 @@ function renderOverview() {
     <div class="kv">
       <div><b>${inv.count}</b><span>Cards${inv.grading ? `, ${inv.grading} at PSA` : ''}</span></div>
       <div><b>${money(inv.cost)}</b><span>Your cost</span></div>
-      <div><b>${money(inv.comps)}</b><span>Comp value</span></div>
-      <div><b class="${inv.at95 < 0 ? 'bad' : ''}">${money(inv.at95)}</b><span>Profit if it all sells at 95%</span></div>
+      <div><b>${money(inv.comps)}</b><span>Comp value${inv.noComp ? `, ${inv.noComp} with no comp` : ''}</span></div>
+      <div><b class="${inv.at95 < 0 ? 'bad' : ''}">${money(inv.at95)}</b><span>Profit if ${inv.noComp ? 'comped cards' : 'it all'} sell${inv.noComp ? '' : 's'} at 95%</span></div>
     </div>
     ${inv.old.length ? `<p class="note warn">${plural(inv.old.length, 'card')} ${inv.old.length === 1 ? 'has' : 'have'} sat ${OLD_DAYS}+ days, holding ${money(inv.oldCost)} of your cash. <button class="btn link" type="button" data-filter-go="old" style="min-height:auto;padding:0;color:inherit;text-decoration:underline">See them</button></p>` : ''}`;
 
@@ -166,7 +166,7 @@ function cardRow(c) {
   if (c.status === 'sold') {
     const p = num(c.sold_price) - cost(c);
     amt = `<b>${money(num(c.sold_price))}</b><span class="${p < 0 ? 'bad' : 'good'}">${p < 0 ? '' : '+'}${money(p)}</span>`;
-  } else amt = `<b>${money(cost(c))}</b>comp ${money(num(c.market_value))}`;
+  } else amt = `<b>${money(cost(c))}</b>${num(c.market_value) ? `comp ${money(num(c.market_value))}` : 'No comp'}`;
   return `<li><button type="button" class="card" data-card="${esc(c.id)}">${slabBadge(c)}
     <div style="min-width:0"><div class="name">${esc(c.name)}</div><div class="meta">${tags.map(t => `<span>${t}</span>`).join('')}</div></div>
     <div class="amt">${amt}</div></button></li>`;
@@ -190,6 +190,7 @@ $('#cardlist').addEventListener('click', e => { const b = e.target.closest('[dat
 /* ---------- add one card ---------- */
 function syncType() { $('#grade-wrap').hidden = radio('f-type') !== 'slab'; }
 function buyHint() {
+  if (noComp()) { $('#buy-hint').textContent = 'No comp yet. Add one later with Edit.'; return; }
   const m = num($('#f-market').value), p = num($('#f-price').value);
   $('#buy-hint').innerHTML = m > 0 && p > 0
     ? `That's <b>${pct(p / m * 100)}</b> of comps. Selling at 95% makes <b class="${m * .95 - p < 0 ? 'bad' : 'good'}">${money(m * .95 - p)}</b>.`
@@ -197,6 +198,16 @@ function buyHint() {
 }
 $$('input[name="f-type"]').forEach(r => r.addEventListener('change', syncType));
 ['#f-market', '#f-price'].forEach(s => $(s).addEventListener('input', buyHint));
+// "No comp" button: card has no comp yet, so leave it out of comp-based totals
+const noComp = () => $('#f-nocomp').getAttribute('aria-pressed') === 'true';
+function setNoComp(on) {
+  $('#f-nocomp').setAttribute('aria-pressed', String(on));
+  $('#f-market').disabled = on;
+  if (on) $('#f-market').value = '';
+  $$('[data-pct]').forEach(b => { b.disabled = on; });
+  buyHint();
+}
+$('#f-nocomp').addEventListener('click', () => { setNoComp(!noComp()); if (!noComp()) $('#f-market').focus(); });
 $$('[data-pct]').forEach(b => b.addEventListener('click', () => {
   const m = num($('#f-market').value);
   if (!m) { toast('Enter the comp value first'); $('#f-market').focus(); return; }
@@ -207,7 +218,7 @@ function resetCardForm() {
   $('#f-date').value = today();
   $('#h-add').textContent = 'Log a buy'; $('#f-submit').textContent = 'Add to inventory';
   $('#f-cancel').hidden = true; $('#sold-wrap').hidden = true; $('#fee-wrap').hidden = true; $('#addmode').hidden = false;
-  syncType(); buyHint();
+  syncType(); setNoComp(false);
 }
 function editCard(c) {
   closeSheet(); setMode('single'); ui.editId = c.id;
@@ -220,14 +231,14 @@ function editCard(c) {
   $('#f-sold').value = c.sold_price || ''; $('#f-solddate').value = c.sold_date || '';
   $('#h-add').textContent = 'Edit card'; $('#f-submit').textContent = 'Save changes';
   $('#f-cancel').hidden = false; $('#addmode').hidden = true;
-  syncType(); buyHint(); go('add', { keepEdit: true });
+  syncType(); setNoComp(!num(c.market_value)); go('add', { keepEdit: true });
 }
 $('#f-cancel').addEventListener('click', () => { resetCardForm(); go('inventory'); });
 $('#cardform').addEventListener('submit', e => {
   e.preventDefault();
   const name = $('#f-name').value.trim();
   if (!name) { toast('Add a card name'); $('#f-name').focus(); return; }
-  const type = radio('f-type'), market = num($('#f-market').value);
+  const type = radio('f-type'), market = noComp() ? 0 : num($('#f-market').value);
   const fields = {
     name, category: radio('f-cat'), type, grade: type === 'slab' ? $('#f-grade').value.trim() : '',
     market_value: market, buy_price: num($('#f-price').value), buy_date: $('#f-date').value || today(), notes: $('#f-notes').value.trim(),
@@ -348,7 +359,7 @@ const showOptions = sel => '<option value="">Online or other</option>' + [...dat
 function cardSheet(id) {
   const c = store.find('cards', id); if (!c) return;
   const bp = num(c.buy_market) ? num(c.buy_price) / num(c.buy_market) * 100 : NaN;
-  const facts = [['Paid', `${money(num(c.buy_price))}${Number.isFinite(bp) ? ` (${pct(bp)})` : ''}`], ['Bought', fmtDate(c.buy_date) || '—'], ['Comp now', money(num(c.market_value))]];
+  const facts = [['Paid', `${money(num(c.buy_price))}${Number.isFinite(bp) ? ` (${pct(bp)})` : ''}`], ['Bought', fmtDate(c.buy_date) || '—'], ['Comp now', num(c.market_value) ? money(num(c.market_value)) : 'No comp']];
   if (num(c.grading_fee)) facts.push(['Grading fee', money(num(c.grading_fee))]);
   facts.push(['Total cost', money(cost(c))]);
   if (c.lot_id) facts.push(['From lot', esc(lotName(c.lot_id))]);

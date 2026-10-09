@@ -1,7 +1,7 @@
 // Service worker: keeps a copy of the app on the device so it opens with no internet.
 // Your card data is NOT stored here. It lives in the app's local storage and in Supabase.
 // Bump VERSION whenever you change any file below, so devices pick up the new version.
-const VERSION = 'cw-v2';
+const VERSION = 'cw-v4';
 const SHELL = [
   './',
   'index.html',
@@ -39,7 +39,8 @@ self.addEventListener('fetch', e => {
   if (e.request.method !== 'GET' || url.origin !== location.origin) return;
   const cached = () => caches.match(e.request, { ignoreSearch: true })
     .then(hit => hit || (e.request.mode === 'navigate' ? caches.match('index.html') : undefined));
-  const network = fetch(e.request).then(res => {
+  // 'no-cache' asks GitHub Pages for the latest file instead of a copy the browser saved earlier
+  const network = fetch(e.request, { cache: 'no-cache' }).then(res => {
     if (res.ok) { const copy = res.clone(); caches.open(VERSION).then(c => c.put(e.request, copy)); }
     return res;
   });

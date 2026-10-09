@@ -470,3 +470,12 @@ input, select, textarea { border-radius: var(--r); background: var(--surface); }
 @media (min-width: 620px) { .sheet { border-radius: 24px; } }
 .toast { background: var(--navy); color: var(--cream); }
 .slab.raw small { color: var(--ink-2); }
+
+/* "No comp" toggle next to the comp field */
+.f-top { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.nocomp { border: 1px solid var(--line); background: var(--surface); color: var(--ink-2); border-radius: 999px; padding: 3px 10px; font-size: 12.5px; font-weight: 600; min-height: 28px; }
+.nocomp:hover { border-color: var(--taupe); color: var(--ink); }
+.nocomp[aria-pressed="true"] { background: var(--navy); border-color: var(--navy); color: var(--cream); }
+@media (prefers-color-scheme: dark) { .nocomp[aria-pressed="true"] { background: var(--cream); border-color: var(--cream); color: var(--navy); } }
+input:disabled { opacity: .5; }
+.grid2 { align-items: end; }
