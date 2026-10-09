@@ -12,40 +12,53 @@
 }
 
 :root {
-  --paper: #f1ebe1;
-  --surface: #faf7f1;
-  --sunk: #e7e0d4;
-  --ink: #2b3a48;
-  --ink-2: #5f6b77;
-  --line: #ddd5c7;
-  --taupe: #b9b0a2;
-  --good: #2e6e4e;
-  --bad: #ad3e2d;
+  /* Page */
+  --paper: #f5f2ec;
+  --surface: #ffffff;
+  --sunk: #efebe4;
+  --ink: #233140;
+  --ink-2: #6a7480;
+  --line: #e6e0d6;
+  --taupe: #bdb4a5;
+  --good: #2d6c4c;
+  --bad: #b03f2e;
   --warn: #8f5d12;
   --on-ink: #f6f1e8;
+  /* Signature navy panels (sidebar, tab bar, hero) - same in both themes */
+  --navy: #1c2733;
+  --navy-2: #26323f;
+  --navy-line: #34414f;
+  --cream: #f1ebe1;
+  --cream-2: #b6b0a6;
+  --gold: #c9a96a;
+  --shadow: 0 1px 2px rgb(28 39 51 / .05), 0 8px 24px rgb(28 39 51 / .06);
 
   --font: "Archivo", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
   --wide: 125%;
   --semi: 112%;
-  --r-sm: 6px;
-  --r: 10px;
-  --r-lg: 16px;
+  --r-sm: 8px;
+  --r: 12px;
+  --r-lg: 20px;
   --tabs-h: 64px;
   color-scheme: light;
 }
 @media (prefers-color-scheme: dark) {
   :root {
-    --paper: #18212b;
-    --surface: #1f2a36;
-    --sunk: #283442;
+    --paper: #111821;
+    --surface: #18212c;
+    --sunk: #212c38;
     --ink: #f1ebe1;
-    --ink-2: #a6afb9;
-    --line: #313e4c;
+    --ink-2: #a3acb6;
+    --line: #2a3542;
     --taupe: #857d70;
     --good: #72c297;
     --bad: #ef8d7a;
     --warn: #e2b061;
     --on-ink: #18212b;
+    --navy: #0c1219;
+    --navy-2: #161f29;
+    --navy-line: #24303c;
+    --shadow: 0 1px 2px rgb(0 0 0 / .3), 0 8px 24px rgb(0 0 0 / .25);
     color-scheme: dark;
   }
 }
@@ -355,3 +368,105 @@ th:last-child, td:last-child { padding-right: 0; }
 .auth-mark { width: 120px; margin: 0 auto 4px; }
 .auth-card .wordmark { margin-bottom: 12px; }
 .auth-card p { margin: 0; text-align: center; color: var(--ink-2); }
+
+
+/* ==========================================================================
+   Premium layer: calm, roomy surfaces with a navy-and-cream signature.
+   Navy panels (sidebar, tab bar, profit hero) stay navy in both themes.
+   No added motion.
+   ========================================================================== */
+
+/* Lighter, more refined weights */
+.view-head h1 { font-weight: 680; font-size: 30px; }
+.block h2, .h-section { font-weight: 640; font-stretch: 105%; font-size: 16px; color: var(--ink); }
+.big { font-weight: 640; letter-spacing: -.025em; }
+.mid { font-weight: 650; }
+.stat b, .kv b { font-weight: 640; }
+
+/* Sidebar and tab bar in navy */
+.sidebar { background: color-mix(in srgb, var(--navy) 96%, transparent); border-color: var(--navy-line); color: var(--cream); }
+.nav button { color: var(--cream-2); }
+.nav button[aria-current="page"] { color: var(--cream); }
+.nav .nav-add svg { background: var(--cream); color: var(--navy); }
+.sidebar .wordmark { color: var(--cream); }
+.sync-pill { color: var(--cream-2); }
+@media (min-width: 960px) {
+  .sidebar { background: var(--navy); border-right: 0; padding: 28px 16px; }
+  .nav button:hover { background: var(--navy-2); color: var(--cream); }
+  .nav button[aria-current="page"] { background: var(--navy-2); box-shadow: inset 2px 0 0 var(--gold); }
+  .main { padding-inline: 48px; padding-block: 44px 72px; }
+}
+.sidebar :focus-visible { outline-color: var(--gold); }
+
+/* Profit hero: the one rich moment on the page */
+.hero {
+  background: radial-gradient(120% 140% at 100% 0%, var(--navy-2) 0%, var(--navy) 60%);
+  color: var(--cream);
+  border: 1px solid var(--navy-line);
+  border-radius: var(--r-lg);
+  padding: 28px 24px;
+  margin-bottom: 16px;
+  box-shadow: var(--shadow);
+}
+.hero .hero-label, .hero .hero-sub, .hero .stat span { color: var(--cream-2); }
+.hero .star { fill: var(--gold); }
+.hero .big.bad { color: #f0a08f; }
+.hero .stats { padding-top: 4px; }
+@media (min-width: 720px) { .hero { padding: 36px 36px; } }
+
+/* Content in soft white cards */
+.cols { gap: 16px; }
+.block {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  padding: 22px 22px 24px;
+  margin-bottom: 16px;
+  box-shadow: var(--shadow);
+}
+.cols .block { margin-bottom: 0; }
+.cols { margin-bottom: 16px; }
+.cols .block:last-child { border-bottom-color: var(--line); }
+.splitbar, .progress { height: 6px; }
+.progress i { background: var(--navy); }
+@media (prefers-color-scheme: dark) { .progress i { background: var(--gold); } }
+.progress.done i { background: var(--good); }
+
+/* Grouped lists, like iOS settings */
+.list, .cardlist {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  box-shadow: var(--shadow);
+  overflow: hidden;
+}
+.list > li, .list > li:first-child { border-top: 0; padding: 14px 18px; }
+.list > li:last-child, .cardlist li:last-child { border-bottom: 0; }
+.cardlist { border-top: 1px solid var(--line); }
+.card { padding: 12px 16px; border-radius: 0; }
+.list .empty-line, .cardlist .empty-line { padding: 18px; }
+.block .list { background: none; border: 0; box-shadow: none; border-radius: 0; }
+.block .list > li { padding-inline: 0; }
+.block .list > li:first-child { border-top: 1px solid var(--line); }
+
+/* Slab badge with a quiet gold edge on graded cards */
+.slab { border-color: var(--ink); background: var(--surface); }
+.slab small { color: var(--gold); }
+@media (prefers-color-scheme: light) { .slab small { color: #9a7a3f; } }
+
+/* Forms: roomier, softer */
+input, select, textarea { border-radius: var(--r); background: var(--surface); }
+.form.inline { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-lg); padding: 16px; box-shadow: var(--shadow); margin-bottom: 14px; }
+.lotrow { border-radius: var(--r-lg); box-shadow: var(--shadow); }
+.btn { border-radius: 999px; }
+.btn.primary { background: var(--navy); color: var(--cream); }
+.btn.primary:hover { background: var(--navy-2); }
+@media (prefers-color-scheme: dark) { .btn.primary { background: var(--cream); color: var(--navy); } .btn.primary:hover { background: #fff; } }
+.seg { background: var(--sunk); }
+.chips button[aria-pressed="true"] { background: var(--navy); border-color: var(--navy); color: var(--cream); }
+@media (prefers-color-scheme: dark) { .chips button[aria-pressed="true"] { background: var(--cream); border-color: var(--cream); color: var(--navy); } }
+
+.sheet { background: var(--surface); border-radius: 24px 24px 0 0; }
+@media (min-width: 620px) { .sheet { border-radius: 24px; } }
+.toast { background: var(--navy); color: var(--cream); }
+.slab.raw small { color: var(--ink-2); }

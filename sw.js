@@ -1,7 +1,7 @@
 // Service worker: keeps a copy of the app on the device so it opens with no internet.
 // Your card data is NOT stored here. It lives in the app's local storage and in Supabase.
 // Bump VERSION whenever you change any file below, so devices pick up the new version.
-const VERSION = 'cw-v1';
+const VERSION = 'cw-v2';
 const SHELL = [
   './',
   'index.html',
