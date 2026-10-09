@@ -29,6 +29,7 @@ It tracks every card bought and sold, splits lot purchases across cards by comp 
 - **Login:** Supabase Auth with email and password.
 - **Security:** The Supabase key in `js/config.js` is public by design. Access is enforced in the database by Row Level Security policies (`user_id = auth.uid()`) on every table. New sign-ups are turned off after the owner's account is created.
 - **Offline sync:** Every change is written to the device first and queued. The queue uploads in order when the connection returns. Each change is an upsert of the full row with a client-generated UUID, so a retry after a dropped connection can't create duplicates. On startup and when returning online, the app pulls a fresh copy from the database and layers any unsent changes on top. See [`js/store.js`](js/store.js).
+- **Live updates:** Supabase Realtime pushes database changes to every open device, so a sale logged on the phone shows on the laptop within seconds. Setup is in [`supabase/realtime.sql`](supabase/realtime.sql).
 - **Money math:** Kept separate from the screens in [`js/calc.js`](js/calc.js).
 
 ## Files

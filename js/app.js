@@ -562,7 +562,7 @@ $('#signout').addEventListener('click', e => {
   if (n) { arm(e.currentTarget, () => signOut(), `${plural(n, 'change')} not uploaded. Tap again to sign out anyway`); return; }
   signOut();
 });
-async function signOut() { await store.sb.auth.signOut().catch(() => {}); store.resetLocal(); showAuth(); }
+async function signOut() { store.stopListening(); await store.sb.auth.signOut().catch(() => {}); store.resetLocal(); showAuth(); }
 
 /* ---------- sync status ---------- */
 function renderSync() {
@@ -613,6 +613,7 @@ async function enter(session) {
   status.user = session?.user || null;
   showApp();
   await store.sync();
+  store.listen();
 }
 
 /* ---------- start ---------- */

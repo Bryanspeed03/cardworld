@@ -110,3 +110,7 @@ begin
     execute format('create index if not exists %I on public.%I (user_id)', t || '_user_idx', t);
   end loop;
 end $$;
+
+-- Live updates between devices (Supabase Realtime)
+alter publication supabase_realtime add table
+  public.cards, public.lots, public.shows, public.expenses, public.payouts, public.settings;

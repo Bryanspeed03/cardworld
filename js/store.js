@@ -165,6 +165,33 @@ const numify = r => { for (const k of NUMERIC) if (k in r && r[k] !== null) r[k]
 
 export async function sync() { await flush(); if (!queue.length) await pull(); }
 
+// --- live updates ------------------------------------------------------------
+// Supabase Realtime pushes every insert, update, and delete to other open devices.
+// Row Level Security still applies, so a device only hears about its own user's rows.
+let channel = null;
+export function listen() {
+  if (!sb || channel) return;
+  channel = sb.channel('cardworld-live');
+  for (const t of TABLES) channel.on('postgres_changes', { event: '*', schema: 'public', table: t }, p => applyRemote(t, p));
+  // After connecting (or reconnecting), pull once to catch anything missed while away
+  channel.subscribe(state => { if (state === 'SUBSCRIBED') sync(); });
+}
+export function stopListening() { if (channel) { sb.removeChannel(channel); channel = null; } }
+function applyRemote(table, p) {
+  if (!base.userId) return;
+  if (p.eventType === 'DELETE') {
+    const id = p.old?.id;
+    if (!id || !base[table][id]) return;
+    delete base[table][id];
+  } else {
+    const row = p.new;
+    if (!row?.id || (row.user_id && row.user_id !== base.userId)) return;
+    base[table][row.id] = numify({ ...row });
+  }
+  local.set(KEY.cache, base);
+  rebuild(); emit();
+}
+
 let notice = () => {};
 export const onNotice = fn => { notice = fn; };
 const emitNotice = m => notice(m);
